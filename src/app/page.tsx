@@ -838,6 +838,12 @@ export default function Home() {
               <textarea
                 value={markdownText}
                 onChange={(e) => setMarkdownText(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && markdownText.trim()) {
+                    e.preventDefault();
+                    handleImportMarkdown();
+                  }
+                }}
                 className="w-full h-[400px] bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white font-mono leading-relaxed focus:outline-none focus:border-blue-500/50 input-glow transition-all resize-none placeholder:text-zinc-600"
                 placeholder={`# Your Cover Title\n*highlight, words*\n> Subtitle text\n---\n## 01 | Slide Heading\n- First bullet point\n- Second bullet point\n---\n## 02 | Another Slide\n*keyword*\n> Subtitle\n- Point one\n- Point two`}
                 spellCheck={false}
