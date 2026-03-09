@@ -21,6 +21,7 @@ import { processImageFile, removeImageBackground } from "@/lib/imageUtils";
 const STORAGE_KEY_SLIDES = "carousel-slides";
 const STORAGE_KEY_SETTINGS = "carousel-settings";
 const STORAGE_KEY_ACTIVE = "carousel-active-index";
+const STORAGE_KEY_MARKDOWN = "carousel-markdown";
 
 const DEFAULT_SETTINGS: CarouselSettings = {
   theme: "dark-professional",
@@ -44,6 +45,7 @@ export default function Home() {
   const [sidebarTab, setSidebarTab] = useState<"slides" | "theme" | "settings">("theme");
   const [showMarkdownModal, setShowMarkdownModal] = useState(false);
   const [markdownText, setMarkdownText] = useState("");
+  const [savedMarkdown, setSavedMarkdown] = useState("");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [removingBg, setRemovingBg] = useState(false);
@@ -61,6 +63,8 @@ export default function Home() {
       if (storedSettings) setSettings(JSON.parse(storedSettings));
       const storedActive = localStorage.getItem(STORAGE_KEY_ACTIVE);
       if (storedActive) setActiveSlideIndex(JSON.parse(storedActive));
+      const storedMarkdown = localStorage.getItem(STORAGE_KEY_MARKDOWN);
+      if (storedMarkdown) setSavedMarkdown(storedMarkdown);
     } catch {}
     setHydrated(true);
   }, []);
@@ -82,6 +86,10 @@ export default function Home() {
     if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY_ACTIVE, JSON.stringify(activeSlideIndex));
   }, [activeSlideIndex, hydrated]);
+  useEffect(() => {
+    if (!hydrated || !savedMarkdown) return;
+    localStorage.setItem(STORAGE_KEY_MARKDOWN, savedMarkdown);
+  }, [savedMarkdown, hydrated]);
 
   const theme = THEMES[settings.theme];
   const activeSlide = slides[activeSlideIndex];
@@ -235,11 +243,18 @@ export default function Home() {
       alert("Could not parse any slides from the markdown. Check the format.");
       return;
     }
-    setSlides(parsed);
+    // Preserve images from existing slides by position
+    const merged = parsed.map((slide, i) => {
+      if (i < slides.length && slides[i].image) {
+        return { ...slide, image: slides[i].image };
+      }
+      return slide;
+    });
+    setSlides(merged);
     setActiveSlideIndex(0);
+    setSavedMarkdown(markdownText);
     setShowMarkdownModal(false);
-    setMarkdownText("");
-  }, [markdownText]);
+  }, [markdownText, slides]);
 
   const previewScale = settings.aspectRatio === "portrait" ? 0.45 : 0.55;
   const thumbHeight = settings.aspectRatio === "portrait" ? 150 : 120;
@@ -281,7 +296,7 @@ export default function Home() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setMarkdownText(MARKDOWN_EXAMPLE);
+              setMarkdownText(savedMarkdown || MARKDOWN_EXAMPLE);
               setShowMarkdownModal(true);
             }}
             className="px-3 py-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] rounded-lg text-sm font-medium transition-all flex items-center gap-2 text-zinc-300 hover:text-white"
@@ -841,9 +856,9 @@ export default function Home() {
             <div className="flex items-center justify-between px-6 py-4 border-t border-white/[0.06]">
               <button
                 onClick={() => setMarkdownText(MARKDOWN_EXAMPLE)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
               >
-                Load example
+                Reset to example
               </button>
               <div className="flex gap-2">
                 <button
