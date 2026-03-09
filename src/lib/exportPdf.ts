@@ -13,23 +13,23 @@ interface QualityConfig {
 
 export const EXPORT_QUALITIES: Record<ExportQuality, QualityConfig> = {
   high: {
-    pixelRatio: 1,
+    pixelRatio: 2,
     format: "JPEG",
     jpegQuality: 0.92,
     label: "High",
-    description: "Best quality (~2-4 MB)",
+    description: "Best quality (~4-8 MB)",
   },
   medium: {
     pixelRatio: 1,
     format: "JPEG",
-    jpegQuality: 0.8,
+    jpegQuality: 0.92,
     label: "Medium",
     description: "Good quality (~1-2 MB)",
   },
   low: {
     pixelRatio: 1,
     format: "JPEG",
-    jpegQuality: 0.6,
+    jpegQuality: 0.7,
     label: "Low",
     description: "Smallest file (~0.5 MB)",
   },
