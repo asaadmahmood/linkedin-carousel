@@ -22,6 +22,9 @@ interface SlideRendererProps {
   interactive?: boolean;
   interactiveScale?: number;
   onImageChange?: (image: SlideImage | undefined) => void;
+  showSlideNumbers?: boolean;
+  patternOpacity?: number;
+  patternScale?: number;
 }
 
 function renderHighlightedText(
@@ -230,15 +233,12 @@ function SwipeArrow({ color }: { color: string }) {
 // Background patterns using SVG data URIs (sourced from heropatterns.com, open source)
 function getPatternBackground(pattern: BackgroundPattern, accentColor: string): string | null {
   if (pattern === "none") return null;
-  // URL-encode the color
   const c = encodeURIComponent(accentColor);
+  // fill-opacity is always 1 here — actual opacity is controlled via the container's CSS opacity
   const patterns: Record<string, string> = {
-    dots: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${c}' fill-opacity='0.07' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1.5'/%3E%3Ccircle cx='13' cy='13' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`,
-    grid: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='${c}' fill-opacity='0.06'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-    diagonal: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${c}' fill-opacity='0.06' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E")`,
-    cross: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${c}' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-    waves: `url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${c}' fill-opacity='0.06'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-    stripes: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${c}' fill-opacity='0.06' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")`,
+    dots: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='${c}' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1.5'/%3E%3Ccircle cx='13' cy='13' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`,
+    grid: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0H0v1h40zM0 0v40h1V0z' fill='${c}'/%3E%3C/svg%3E")`,
+    waves: `url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='${c}'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
   };
   return patterns[pattern] || null;
 }
@@ -271,6 +271,9 @@ export default function SlideRenderer({
   interactive = false,
   interactiveScale,
   onImageChange,
+  showSlideNumbers = true,
+  patternOpacity = 0.06,
+  patternScale = 1,
 }: SlideRendererProps) {
   const isCover = slide.type === "cover";
   const isCta = slide.type === "cta";
@@ -301,9 +304,9 @@ export default function SlideRenderer({
         {patternBg && (
           <div style={{
             position: "absolute", inset: 0, backgroundImage: patternBg,
+            backgroundSize: `${Math.round(40 * patternScale)}px`,
+            opacity: patternOpacity,
             pointerEvents: "none", zIndex: 1,
-            maskImage: "radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, black 70%)",
-            WebkitMaskImage: "radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, black 70%)",
           }} />
         )}
         <SlideDecoration decoration={decoration} color={theme.accentColor} isCover={isCover} />
@@ -376,7 +379,7 @@ export default function SlideRenderer({
                   </>
                 ) : (
                   <>
-                    <span style={{ color: theme.accentColor, fontSize: 16, marginTop: centered ? 0 : 10, flexShrink: 0 }}>{"\u25CF"}</span>
+                    <span style={{ color: theme.accentColor, fontSize: 18, marginTop: centered ? 0 : 10, flexShrink: 0 }}>{"\u25CF"}</span>
                     <span>{item}</span>
                   </>
                 )}
@@ -393,7 +396,7 @@ export default function SlideRenderer({
           ...(centered ? { gap: 24 } : {}),
         }}>
           <span>{authorHandle}</span>
-          {!centered && <span>{slideIndex + 1} / {totalSlides}</span>}
+          {!centered && showSlideNumbers && <span>{slideIndex + 1} / {totalSlides}</span>}
         </div>
 
         {/* Per-slide image */}

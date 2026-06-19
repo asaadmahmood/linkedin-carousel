@@ -86,7 +86,21 @@ export function parseMarkdownToSlides(markdown: string): SlideData[] {
       // Highlight words: *word1, word2*
       else if (/^\*[^*]+\*$/.test(line)) {
         const inner = line.slice(1, -1);
-        highlightWords = inner.split(",").map((w) => w.trim()).filter(Boolean);
+        highlightWords = [];
+        let _cur = "", _inQ = false;
+        for (let i = 0; i < inner.length; i++) {
+          const ch = inner[i];
+          if (ch === '"') { _inQ = !_inQ; continue; }
+          if (ch === "," && !_inQ) {
+            const t = _cur.trim();
+            if (t) highlightWords.push(t);
+            _cur = "";
+            continue;
+          }
+          _cur += ch;
+        }
+        const _last = _cur.trim();
+        if (_last) highlightWords.push(_last);
       }
       // Subtitle: > text
       else if (line.startsWith("> ")) {

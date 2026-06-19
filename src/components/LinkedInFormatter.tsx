@@ -3,14 +3,40 @@
 import React, { useState, useCallback } from "react";
 
 /**
- * LinkedIn collapses consecutive newlines. To preserve line breaks,
- * we insert a zero-width space on otherwise-empty lines.
+ * LinkedIn strips single line breaks and collapses multiple newlines.
+ * Strategy: insert a zero-width space on its own line between every pair of
+ * content lines so LinkedIn sees a "paragraph break" and keeps both lines.
+ * Empty lines also get a zero-width space to prevent collapse.
+ * Consecutive bullet/symbol lines stay tight — only one ZWS between them
+ * (same as any other pair), so no extra blank gap appears.
  */
+const BULLET_RE = /^[\s]*(→|➜|➤|➡|▸|▹|►|•|‣|⁃|◦|◆|◇|■|□|★|☆|✦|✧|–|—|-|\*|>|›|»|✓|✔|✅|❌|⚡|🔹|🔸|🔷|🔶|\d+[.)]\s)/;
+
 function formatForLinkedIn(text: string): string {
-  return text
-    .split("\n")
-    .map((line) => (line.trim() === "" ? "\u200B" : line))
-    .join("\n");
+  const lines = text.split("\n");
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.trim() === "") {
+      // Empty line → ZWS placeholder to prevent LinkedIn from collapsing it
+      result.push("\u200B");
+      continue;
+    }
+
+    result.push(line);
+
+    // If there's a next line and it's non-empty, insert a ZWS line between
+    // them so LinkedIn preserves the line break. Without this, LinkedIn
+    // would merge them into a single paragraph.
+    const next = lines[i + 1];
+    if (next !== undefined && next.trim() !== "") {
+      result.push("\u200B");
+    }
+  }
+
+  return result.join("\n");
 }
 
 export default function LinkedInFormatter() {

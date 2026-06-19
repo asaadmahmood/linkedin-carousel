@@ -8,7 +8,8 @@ export type ThemeId =
   | "clean-white"
   | "forest-dark"
   | "coral-sunset"
-  | "ocean-deep";
+  | "ocean-deep"
+  | "emerald-lavender";
 
 export type DecorationStyle =
   | "none"
@@ -24,16 +25,13 @@ export type AspectRatio = "square" | "portrait";
 
 export type TextAlign = "left" | "center";
 
-export type BackgroundPattern = "none" | "dots" | "grid" | "diagonal" | "cross" | "waves" | "stripes";
+export type BackgroundPattern = "none" | "dots" | "grid" | "waves";
 
 export const BACKGROUND_PATTERNS: { id: BackgroundPattern; name: string }[] = [
   { id: "none", name: "None" },
   { id: "dots", name: "Dots" },
   { id: "grid", name: "Grid" },
-  { id: "diagonal", name: "Diagonal" },
-  { id: "cross", name: "Cross" },
   { id: "waves", name: "Waves" },
-  { id: "stripes", name: "Stripes" },
 ];
 
 export interface FontOption {
@@ -63,6 +61,7 @@ export interface SlideImage {
   height: number;
   aspectRatio: number;
   inverted?: boolean;
+  opacity?: number;
 }
 
 export interface SlideData {
@@ -87,6 +86,9 @@ export interface CarouselSettings {
   backgroundPattern: BackgroundPattern;
   aspectRatio: AspectRatio;
   textAlign: TextAlign;
+  showSlideNumbers: boolean;
+  patternOpacity: number;
+  patternScale: number;
 }
 
 export interface ThemeConfig {
@@ -116,7 +118,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Dark Professional",
     description: "Inspired by Nick Broekema",
     bgColor: "#0f1923",
-    bgGradient: "linear-gradient(135deg, #142e25 0%, #0f1923 50%, #0c141c 100%)",
     textColor: "#e2f5e9",
     highlightColor: "#2d7a4f",
     highlightTextColor: "#ffffff",
@@ -155,7 +156,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Midnight Blue",
     description: "Deep blue with cyan accents",
     bgColor: "#0a1628",
-    bgGradient: "linear-gradient(135deg, #0d1f38 0%, #0a1628 50%, #081220 100%)",
     textColor: "#d4e8fc",
     highlightColor: "#0ea5e9",
     highlightTextColor: "#ffffff",
@@ -175,7 +175,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Warm Gradient",
     description: "Warm tones with orange accent",
     bgColor: "#1c1117",
-    bgGradient: "linear-gradient(135deg, #24151b 0%, #1c1117 50%, #150d12 100%)",
     textColor: "#f5ddd8",
     highlightColor: "#ea580c",
     highlightTextColor: "#ffffff",
@@ -195,7 +194,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Asaad Dark",
     description: "Dark navy with mint accents",
     bgColor: "#0c1824",
-    bgGradient: "linear-gradient(135deg, #122e3e 0%, #0c1824 50%, #08121e 100%)",
     textColor: "#d4fcf6",
     highlightColor: "#7dd3c0",
     highlightTextColor: "#0c1824",
@@ -253,7 +251,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Forest Dark",
     description: "Deep green woodland tones",
     bgColor: "#0d1f14",
-    bgGradient: "linear-gradient(135deg, #122c1c 0%, #0d1f14 50%, #0a1810 100%)",
     textColor: "#d4f0d8",
     highlightColor: "#4caf50",
     highlightTextColor: "#ffffff",
@@ -273,7 +270,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Coral Sunset",
     description: "Warm coral and peach tones",
     bgColor: "#1a0f0f",
-    bgGradient: "linear-gradient(135deg, #221313 0%, #1a0f0f 50%, #140b0b 100%)",
     textColor: "#f5dbd9",
     highlightColor: "#ff6b6b",
     highlightTextColor: "#ffffff",
@@ -293,7 +289,6 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     name: "Ocean Deep",
     description: "Deep sea blues and teals",
     bgColor: "#0a1a2e",
-    bgGradient: "linear-gradient(135deg, #0e263e 0%, #0a1a2e 50%, #071525 100%)",
     textColor: "#d0ecf8",
     highlightColor: "#06b6d4",
     highlightTextColor: "#ffffff",
@@ -306,6 +301,25 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     preview: {
       bg: "#0a1a2e",
       accent: "#06b6d4",
+    },
+  },
+  "emerald-lavender": {
+    id: "emerald-lavender",
+    name: "Emerald Lavender",
+    description: "Dark green with lavender highlights",
+    bgColor: "#1a2b1a",
+    textColor: "#cdddce",
+    highlightColor: "#a8e8cd",
+    highlightTextColor: "#1a2b1a",
+    subtitleColor: "#cdddce",
+    accentColor: "#c09ee0",
+    authorColor: "#5a7a5a",
+    fontHeading: "var(--font-dm-sans)",
+    fontBody: "var(--font-inter)",
+    defaultDecoration: "none",
+    preview: {
+      bg: "#1a2b1a",
+      accent: "#a8e8cd",
     },
   },
 };

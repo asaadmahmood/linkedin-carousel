@@ -195,6 +195,7 @@ export default function DraggableImage({
           pointerEvents: "none",
           borderRadius: 8,
           filter: image.inverted ? "invert(1)" : undefined,
+          opacity: image.opacity ?? 1,
         }}
       />
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { SlideData, AspectRatio } from "@/lib/types";
 import { processImageFile } from "@/lib/imageUtils";
 
@@ -18,6 +18,37 @@ export default function SlideEditor({ slide, onChange, aspectRatio = "square" }:
     onChange({ ...slide, ...partial });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const slideHeight = aspectRatio === "portrait" ? 1350 : 1080;
+
+  const serializeHighlightWords = (words: string[]) =>
+    words.map(w => w.includes(",") ? `"${w}"` : w).join(", ");
+
+  const parseHighlightWords = (raw: string): string[] => {
+    const words: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch === '"') { inQuotes = !inQuotes; continue; }
+      if (ch === "," && !inQuotes) {
+        const trimmed = current.trim();
+        if (trimmed) words.push(trimmed);
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    const last = current.trim();
+    if (last) words.push(last);
+    return words;
+  };
+
+  const [highlightText, setHighlightText] = useState(() =>
+    serializeHighlightWords(slide.highlightWords)
+  );
+
+  useEffect(() => {
+    setHighlightText(serializeHighlightWords(slide.highlightWords));
+  }, [slide.id]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,17 +122,14 @@ export default function SlideEditor({ slide, onChange, aspectRatio = "square" }:
         <p className="text-[10px] text-zinc-600 mb-2">Comma-separated words to highlight</p>
         <input
           type="text"
-          value={slide.highlightWords.join(", ")}
-          onChange={(e) =>
-            update({
-              highlightWords: e.target.value
-                .split(",")
-                .map((w) => w.trim())
-                .filter(Boolean),
-            })
-          }
+          value={highlightText}
+          onChange={(e) => setHighlightText(e.target.value)}
+          onBlur={() => update({ highlightWords: parseHighlightWords(highlightText) })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") update({ highlightWords: parseHighlightWords(highlightText) });
+          }}
           className={inputClass}
-          placeholder="word1, word2"
+          placeholder={`word1, word2, "$3,000"`}
         />
       </div>
 

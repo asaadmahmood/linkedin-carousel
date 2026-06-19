@@ -34,6 +34,9 @@ const DEFAULT_SETTINGS: CarouselSettings = {
   backgroundPattern: "none",
   aspectRatio: "square",
   textAlign: "left",
+  showSlideNumbers: true,
+  patternOpacity: 0.06,
+  patternScale: 1,
 };
 
 export default function CarouselGenerator() {
@@ -114,6 +117,65 @@ export default function CarouselGenerator() {
       updateSlide({ ...activeSlide, image });
     } catch {}
   }, [activeSlide, slideHeight, updateSlide]);
+
+  const handlePaste = useCallback(
+    async (e: ClipboardEvent) => {
+      if (!activeSlide) return;
+      // Don't hijack paste while the user is typing in a field or editable element
+      const target = e.target as HTMLElement | null;
+      const active = (document.activeElement as HTMLElement | null) ?? target;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          active.isContentEditable)
+      ) {
+        return;
+      }
+
+      const clipboard = e.clipboardData;
+      if (!clipboard) return;
+
+      // 1. Image paste -> set as the active slide's image
+      const imageItem = Array.from(clipboard.items).find((item) =>
+        item.type.startsWith("image/")
+      );
+      if (imageItem) {
+        const file = imageItem.getAsFile();
+        if (file) {
+          e.preventDefault();
+          try {
+            const image = await processImageFile(file, 1080, slideHeight);
+            updateSlide({ ...activeSlide, image });
+          } catch {}
+          return;
+        }
+      }
+
+      // 2. Text paste -> populate heading (and bullets for extra lines)
+      const text = clipboard.getData("text/plain");
+      if (text && text.trim()) {
+        e.preventDefault();
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        if (lines.length === 0) return;
+        const [heading, ...rest] = lines;
+        updateSlide({
+          ...activeSlide,
+          heading,
+          ...(rest.length > 0 ? { bodyItems: rest } : {}),
+        });
+      }
+    },
+    [activeSlide, slideHeight, updateSlide]
+  );
+
+  useEffect(() => {
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [handlePaste]);
 
   const handleRemoveBg = useCallback(async () => {
     if (!activeSlide?.image || removingBg) return;
@@ -448,6 +510,22 @@ export default function CarouselGenerator() {
                 </div>
 
                 <div className="section-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Slide Numbers</h3>
+                    <button
+                      onClick={() => setSettings((s) => ({ ...s, showSlideNumbers: !s.showSlideNumbers }))}
+                      className={`relative w-9 h-5 rounded-full transition-colors ${
+                        settings.showSlideNumbers ? "bg-blue-600" : "bg-zinc-700"
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                        settings.showSlideNumbers ? "translate-x-4" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="section-card">
                   <h3 className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-3">Background Pattern</h3>
                   <div className="grid grid-cols-4 gap-1.5">
                     {BACKGROUND_PATTERNS.map((p) => (
@@ -465,6 +543,34 @@ export default function CarouselGenerator() {
                       </button>
                     ))}
                   </div>
+                  {settings.backgroundPattern !== "none" && (
+                    <div className="mt-3 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500 font-medium w-12">Opacity</span>
+                        <input
+                          type="range"
+                          min="1"
+                          max="30"
+                          value={Math.round(settings.patternOpacity * 100)}
+                          onChange={(e) => setSettings((s) => ({ ...s, patternOpacity: Number(e.target.value) / 100 }))}
+                          className="flex-1 h-1 accent-blue-500 cursor-pointer"
+                        />
+                        <span className="text-[10px] text-zinc-500 tabular-nums w-8 text-right">{Math.round(settings.patternOpacity * 100)}%</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500 font-medium w-12">Size</span>
+                        <input
+                          type="range"
+                          min="5"
+                          max="100"
+                          value={Math.round(settings.patternScale * 100)}
+                          onChange={(e) => setSettings((s) => ({ ...s, patternScale: Number(e.target.value) / 100 }))}
+                          className="flex-1 h-1 accent-blue-500 cursor-pointer"
+                        />
+                        <span className="text-[10px] text-zinc-500 tabular-nums w-8 text-right">{Math.round(settings.patternScale * 100)}%</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="section-card">
@@ -566,6 +672,9 @@ export default function CarouselGenerator() {
                     backgroundPattern={settings.backgroundPattern}
                     aspectRatio={settings.aspectRatio}
                     textAlign={settings.textAlign}
+                    showSlideNumbers={settings.showSlideNumbers}
+                    patternOpacity={settings.patternOpacity}
+                    patternScale={settings.patternScale}
                     interactive={true}
                     interactiveScale={previewScale}
                     onImageChange={(image) => updateSlide({ ...activeSlide, image })}
@@ -575,7 +684,23 @@ export default function CarouselGenerator() {
             </div>
 
             {activeSlide?.image && (
-              <div className="absolute bottom-6 right-6 flex gap-2">
+              <div className="absolute bottom-6 right-6 flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.1] backdrop-blur-sm">
+                  <span className="text-[10px] text-zinc-400 font-medium">Opacity</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={Math.round((activeSlide.image.opacity ?? 1) * 100)}
+                    onChange={(e) => {
+                      if (!activeSlide.image) return;
+                      updateSlide({ ...activeSlide, image: { ...activeSlide.image, opacity: Number(e.target.value) / 100 } });
+                    }}
+                    className="w-20 h-1 accent-blue-500 cursor-pointer"
+                  />
+                  <span className="text-[10px] text-zinc-400 tabular-nums w-7 text-right">{Math.round((activeSlide.image.opacity ?? 1) * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     if (!activeSlide.image) return;
@@ -612,6 +737,7 @@ export default function CarouselGenerator() {
                 >
                   Remove
                 </button>
+                </div>
               </div>
             )}
           </div>
@@ -672,6 +798,9 @@ export default function CarouselGenerator() {
                         backgroundPattern={settings.backgroundPattern}
                         aspectRatio={settings.aspectRatio}
                         textAlign={settings.textAlign}
+                    showSlideNumbers={settings.showSlideNumbers}
+                    patternOpacity={settings.patternOpacity}
+                    patternScale={settings.patternScale}
                       />
                     </div>
                     <div className={`absolute bottom-0 left-0 right-0 text-center py-0.5 ${
@@ -738,6 +867,8 @@ export default function CarouselGenerator() {
               backgroundPattern={settings.backgroundPattern}
               aspectRatio={settings.aspectRatio}
               textAlign={settings.textAlign}
+              patternOpacity={settings.patternOpacity}
+              patternScale={settings.patternScale}
             />
           </div>
         ))}
@@ -847,27 +978,9 @@ function PatternPreview({ pattern }: { pattern: BackgroundPattern }) {
         <line x1="0" y1="8" x2="24" y2="8" /><line x1="0" y1="16" x2="24" y2="16" />
       </svg>
     ),
-    diagonal: (
-      <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="0.75" fill="none" opacity="0.5">
-        <line x1="0" y1="6" x2="6" y2="0" /><line x1="0" y1="14" x2="14" y2="0" /><line x1="0" y1="22" x2="22" y2="0" />
-        <line x1="2" y1="24" x2="24" y2="2" /><line x1="10" y1="24" x2="24" y2="10" /><line x1="18" y1="24" x2="24" y2="18" />
-      </svg>
-    ),
-    cross: (
-      <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5">
-        <path d="M5 4v4M3 6h4" /><path d="M17 4v4M15 6h4" /><path d="M11 14v4M9 16h4" />
-        <path d="M5 16v4M3 18h4" /><path d="M17 16v4M15 18h4" />
-      </svg>
-    ),
     waves: (
       <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.5">
         <path d="M0 6c4-4 8 4 12 0s8 4 12 0" /><path d="M0 12c4-4 8 4 12 0s8 4 12 0" /><path d="M0 18c4-4 8 4 12 0s8 4 12 0" />
-      </svg>
-    ),
-    stripes: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.4">
-        <rect x="0" y="2" width="24" height="2" /><rect x="0" y="8" width="24" height="2" />
-        <rect x="0" y="14" width="24" height="2" /><rect x="0" y="20" width="24" height="2" />
       </svg>
     ),
   };
