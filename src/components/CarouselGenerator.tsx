@@ -700,6 +700,29 @@ export default function CarouselGenerator() {
                   />
                   <span className="text-[10px] text-zinc-400 tabular-nums w-7 text-right">{Math.round((activeSlide.image.opacity ?? 1) * 100)}%</span>
                 </div>
+                <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-white/[0.08] border border-white/[0.1] backdrop-blur-sm">
+                  {([
+                    ["left", "M1 2h12M1 6h7M1 10h9"],
+                    ["center", "M1 2h12M3.5 6h7M2.5 10h9"],
+                    ["right", "M1 2h12M6 6h7M4 10h9"],
+                  ] as const).map(([align, path]) => (
+                    <button
+                      key={align}
+                      onClick={() => {
+                        if (!activeSlide.image) return;
+                        const w = activeSlide.image.width;
+                        const x = align === "left" ? 0 : align === "right" ? 1080 - w : (1080 - w) / 2;
+                        updateSlide({ ...activeSlide, image: { ...activeSlide.image, x } });
+                      }}
+                      title={`Align ${align}`}
+                      className="p-1.5 rounded-md text-zinc-300 hover:text-white hover:bg-white/[0.12] transition-all"
+                    >
+                      <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <path d={path} />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
                 <div className="flex items-center gap-2">
                 <button
                   onClick={() => {

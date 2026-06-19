@@ -50,6 +50,13 @@ export default function SlideEditor({ slide, onChange, aspectRatio = "square" }:
     setHighlightText(serializeHighlightWords(slide.highlightWords));
   }, [slide.id]);
 
+  const alignImage = (align: "left" | "center" | "right") => {
+    if (!slide.image) return;
+    const w = slide.image.width;
+    const x = align === "left" ? 0 : align === "right" ? 1080 - w : (1080 - w) / 2;
+    update({ image: { ...slide.image, x } });
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -209,6 +216,24 @@ export default function SlideEditor({ slide, onChange, aspectRatio = "square" }:
               alt=""
               className="w-full h-20 object-cover rounded-lg border border-white/[0.08]"
             />
+            <div className="flex gap-2">
+              {([
+                ["left", "M1 2h12M1 6h7M1 10h9"],
+                ["center", "M1 2h12M3.5 6h7M2.5 10h9"],
+                ["right", "M1 2h12M6 6h7M4 10h9"],
+              ] as const).map(([align, path]) => (
+                <button
+                  key={align}
+                  onClick={() => alignImage(align)}
+                  title={`Align ${align}`}
+                  className="flex-1 flex items-center justify-center py-2 rounded-lg border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12] transition-all"
+                >
+                  <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d={path} />
+                  </svg>
+                </button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={() => fileInputRef.current?.click()}
